@@ -1,0 +1,32 @@
+#this ansible playbook tasks is to run the software upgrade on the VMtemplate after it was converted to vm
+---
+- hosts: adserver
+  tasks:
+  #copy the installer from ansible file repository to target VMtemplate
+     - name: Copy installer
+       win_copy:
+          src: /etc/ansible/files/xagtSetup_26.21.10_universal.msi
+          dest: c:\Temp\xagtSetup_26.21.10_universal.msi
+     - name: Copy config file
+       win_copy:
+          src: /etc/ansible/files/agent_config.json
+          dest: c:\Temp\agent_config.json  
+ #check if the service exist 
+     - name: check if service exist or running
+       win_service:
+          name: xagt
+          register: result
+          failed_when: result is not defined
+          #ignore_errors: yes
+# install the application to the target VMtemplate
+     - name: install agent
+       win_command: msiexec.exe /i xagtSetup_26.21.10_universal.msi /quiet /passive
+       args:
+         chdir: C:\Temp\
+     - debug:
+         msg: "display service output"
+#remove the installer after the installation for cleanup
+     - name: Clean up server
+       win_file: 
+         path: c:\Temp\
+         state: absent
